@@ -40,7 +40,23 @@ namespace NzbDrone.Core.Indexers.Torznab
             });
 
             RuleFor(c => c.BaseUrl).ValidRootUrl();
+            RuleFor(c => c.BaseUrl).Custom((c, context) =>
+            {
+                if (c.Contains("/torznab/all") || c.Contains("/api/v2.0/indexers/all/results/torznab"))
+                {
+                    context.AddFailure("Jackett's all endpoint is not supported, please add indexers individually");
+                }
+            });
+
             RuleFor(c => c.ApiPath).ValidUrlBase("/api");
+            RuleFor(c => c.ApiPath).Custom((c, context) =>
+            {
+                if (c.Contains("/torznab/all") || c.Contains("/api/v2.0/indexers/all/results/torznab"))
+                {
+                    context.AddFailure("Jackett's all endpoint is not supported, please add indexers individually");
+                }
+            });
+
             RuleFor(c => c.ApiKey).NotEmpty().When(ShouldHaveApiKey);
             RuleFor(c => c.AdditionalParameters).Matches(AdditionalParametersRegex)
                                                 .When(c => !c.AdditionalParameters.IsNullOrWhiteSpace());

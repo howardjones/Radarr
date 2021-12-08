@@ -27,6 +27,14 @@ function getInternalLink(source) {
           to="/settings/indexers"
         />
       );
+    case 'IndexerJackettAllCheck':
+      return (
+        <IconButton
+          name={icons.SETTINGS}
+          title={translate('Settings')}
+          to="/settings/indexers"
+        />
+      );
     case 'DownloadClientCheck':
     case 'DownloadClientStatusCheck':
     case 'ImportMechanismCheck':
