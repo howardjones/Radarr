@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.Download.Clients;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Test.Framework;
 
@@ -31,6 +32,10 @@ namespace NzbDrone.Core.Test.Download
             Mocker.GetMock<IDownloadClientStatusService>()
                   .Setup(v => v.GetBlockedProviders())
                   .Returns(_blockedProviders);
+
+            Mocker.GetMock<IIndexerFactory>()
+                  .Setup(v => v.Exists(It.IsAny<int>()))
+                  .Returns(false);
         }
 
         private Mock<IDownloadClient> WithUsenetClient(int priority = 0)
@@ -65,6 +70,21 @@ namespace NzbDrone.Core.Test.Download
             mock.SetupGet(v => v.Protocol).Returns(DownloadProtocol.Torrent);
 
             return mock;
+        }
+
+        private void WithTorrentIndexer(int downloadClientId)
+        {
+            Mocker.GetMock<IIndexerFactory>()
+                  .Setup(v => v.Exists(It.IsAny<int>()))
+                  .Returns(true);
+
+            Mocker.GetMock<IIndexerFactory>()
+                .Setup(v => v.Get(It.IsAny<int>()))
+                .Returns(Builder<IndexerDefinition>
+                    .CreateNew()
+                    .With(v => v.Id = _nextId++)
+                    .With(v => v.DownloadClientId = downloadClientId)
+                    .Build());
         }
 
         private void GivenBlockedClient(int id)
@@ -222,6 +242,40 @@ namespace NzbDrone.Core.Test.Download
             client2.Definition.Id.Should().Be(3);
             client3.Definition.Id.Should().Be(2);
             client4.Definition.Id.Should().Be(3);
+        }
+
+        [Test]
+        public void should_always_choose_indexer_client()
+        {
+            WithUsenetClient();
+            WithTorrentClient();
+            WithTorrentClient();
+            WithTorrentClient();
+            WithTorrentIndexer(3);
+
+            var client1 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
+            var client2 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
+            var client3 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
+            var client4 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
+            var client5 = Subject.GetDownloadClient(DownloadProtocol.Torrent, 1);
+
+            client1.Definition.Id.Should().Be(3);
+            client2.Definition.Id.Should().Be(3);
+            client3.Definition.Id.Should().Be(3);
+            client4.Definition.Id.Should().Be(3);
+            client5.Definition.Id.Should().Be(3);
+        }
+
+        [Test]
+        public void should_fail_to_choose_client_when_indexer_reference_does_not_exist()
+        {
+            WithUsenetClient();
+            WithTorrentClient();
+            WithTorrentClient();
+            WithTorrentClient();
+            WithTorrentIndexer(5);
+
+            Assert.Throws<DownloadClientUnavailableException>(() => Subject.GetDownloadClient(DownloadProtocol.Torrent, 1));
         }
     }
 }
