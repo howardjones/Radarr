@@ -32,10 +32,6 @@ namespace NzbDrone.Core.Test.Download
             Mocker.GetMock<IDownloadClientStatusService>()
                   .Setup(v => v.GetBlockedProviders())
                   .Returns(_blockedProviders);
-
-            Mocker.GetMock<IIndexerFactory>()
-                  .Setup(v => v.Exists(It.IsAny<int>()))
-                  .Returns(false);
         }
 
         private Mock<IDownloadClient> WithUsenetClient(int priority = 0)
@@ -75,11 +71,7 @@ namespace NzbDrone.Core.Test.Download
         private void WithTorrentIndexer(int downloadClientId)
         {
             Mocker.GetMock<IIndexerFactory>()
-                  .Setup(v => v.Exists(It.IsAny<int>()))
-                  .Returns(true);
-
-            Mocker.GetMock<IIndexerFactory>()
-                .Setup(v => v.Get(It.IsAny<int>()))
+                .Setup(v => v.Find(It.IsAny<int>()))
                 .Returns(Builder<IndexerDefinition>
                     .CreateNew()
                     .With(v => v.Id = _nextId++)

@@ -44,20 +44,15 @@ namespace NzbDrone.Core.Download
                 return null;
             }
 
-            if (_indexerFactory.Exists(indexerId))
+            if (indexerId > 0)
             {
-                var indexer = _indexerFactory.Get(indexerId);
+                var indexer = _indexerFactory.Find(indexerId);
 
-                if (indexer.DownloadClientId > 0)
+                if (indexer != null && indexer.DownloadClientId > 0)
                 {
-                    try
-                    {
-                        return availableProviders.Single(d => d.Definition.Id == indexer.DownloadClientId);
-                    }
-                    catch
-                    {
-                        throw new DownloadClientUnavailableException($"Indexer specified download client is not available");
-                    }
+                    var client = availableProviders.SingleOrDefault(d => d.Definition.Id == indexer.DownloadClientId);
+
+                    return client ?? throw new DownloadClientUnavailableException($"Indexer specified download client is not available");
                 }
             }
 
