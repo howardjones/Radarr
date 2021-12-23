@@ -306,12 +306,16 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
         public static string FormatVideoDynamicRangeType(MediaInfoModel mediaInfo)
         {
-            switch (mediaInfo.GetHdrFormat())
+            switch (mediaInfo.VideoHdrFormat)
             {
                 case HdrFormat.DolbyVision:
                     return "DV";
                 case HdrFormat.DolbyVisionHdr10:
                     return "DV HDR10";
+                case HdrFormat.DolbyVisionHlg:
+                    return "DV HLG";
+                case HdrFormat.DolbyVisionSdr:
+                    return "DV SDR";
                 case HdrFormat.Hdr10:
                     return "HDR10";
                 case HdrFormat.Hdr10Plus:
@@ -321,6 +325,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
                 case HdrFormat.Pq10:
                     return "PQ";
             }
+
             return "";
         }
     }
